@@ -4,11 +4,60 @@ var fs = require('fs');
 var htmlToText = require('html-to-text');
 var marked = require('marked');
 
+var renderer = new marked.Renderer();
+
+var ITALIC_COLOR = 'blue';
+
+renderer.heading = function (text, level) {
+    var tags = [['bold'],
+                [ITALIC_COLOR + '-fg'],
+                ['center', 'bold'],
+                ['center', ITALIC_COLOR + '-fg'],
+                ['underline'],
+                ['center', 'underline']
+               ];
+    var opening = '';
+    var closing = '';
+    for(var i = 0; i < tags[level - 1].length; i++) {
+        opening += '{' + tags[level - 1][i] + '}';
+        closing = '{/' + tags[level - 1][i] + '}' + closing;
+    }
+    return opening + '<h' + level + '>' + text + '</h' + level + '>' + closing + '<br />';
+};
+
+renderer.link = function(href, title, text) {
+    return '{underline}{cyan-fg}' + href + '{/cyan-fg}{/underline}';
+};
+
+renderer.em = function(text) {
+    return '{' + ITALIC_COLOR + '-fg}*' + text + '*{/' + ITALIC_COLOR + '-fg}';
+};
+
+renderer.strong = function(text) {
+    return '{bold}' + text + '{/bold}';
+};
+
+renderer.del = function(text) {
+    return '{gray-fg}' + text + '{/gray-fg}';
+};
+
+renderer.blockquote = function(quote) {
+    return '{inverse}' + quote + '{/inverse}';
+}
+
+renderer.code = function(code, language) {
+    return '{green-fg}<pre>' + code + '</pre>{/green-fg}';
+}
+
+renderer.hr = function() {
+    return '{blue-bg}<br /><br />{/blue-bg}<br /><br />';
+}
+
 marked.setOptions({
-  renderer: new marked.Renderer(),
+  renderer: renderer,
   gfm: true,
   tables: true,
-  breaks: false,
+  breaks: true,
   pedantic: false,
   sanitize: false,
   smartLists: true,
@@ -51,10 +100,10 @@ function mainBox(cont) {
 // Convert the Markdown data to
 function convertMD(data) {
     var html = marked(data);
-    var txt = htmlToText.fromString(html, {tables: true});
+    var txt = htmlToText.fromString(html, {tables: true, wordwrap: false});
     return txt;
 }
 
-var buf = fs.readFileSync('test_files/fantasy2015.md', {encoding: 'utf8'});
+var buf = fs.readFileSync('test_files/Markdown-Cheatsheet.md', {encoding: 'utf8'});
 
 mainBox(convertMD(buf));
