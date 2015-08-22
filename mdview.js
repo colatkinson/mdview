@@ -3,6 +3,13 @@ var blessed = require('blessed');
 var fs = require('fs');
 var htmlToText = require('html-to-text');
 var marked = require('marked');
+var program = require('commander');
+
+program
+    .version(require('./package.json').version)
+    .description('An simple command line markdown viewer')
+    .usage('<file>')
+    .parse(process.argv);
 
 var renderer = new marked.Renderer();
 
@@ -104,6 +111,10 @@ function convertMD(data) {
     return txt;
 }
 
-var buf = fs.readFileSync('test_files/Markdown-Cheatsheet.md', {encoding: 'utf8'});
+if(program.args.length != 1) {
+    program.help();
+}
+
+var buf = fs.readFileSync(program.args[0], {encoding: 'utf8'});
 
 mainBox(convertMD(buf));
