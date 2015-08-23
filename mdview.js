@@ -123,7 +123,7 @@ function loadFiles(files) {
 program
     .version(require('./package.json').version)
     .description('An simple command line markdown viewer')
-    .usage('[FILE...]')
+    .usage('<FILE...>')
     .parse(process.argv);
 
 if(program.args.length < 1) {
