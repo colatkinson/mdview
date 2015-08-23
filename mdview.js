@@ -115,6 +115,10 @@ if(program.args.length != 1) {
     program.help();
 }
 
-var buf = fs.readFileSync(program.args[0], {encoding: 'utf8'});
-
-mainBox(convertMD(buf));
+var buf = fs.readFile(program.args[0], {encoding: 'utf8'}, function(err, data) {
+    if(!err) {
+        mainBox(convertMD(data));
+    } else {
+        console.log(err);
+    }
+});
