@@ -5,12 +5,6 @@ var htmlToText = require('html-to-text');
 var marked = require('marked');
 var program = require('commander');
 
-program
-    .version(require('./package.json').version)
-    .description('An simple command line markdown viewer')
-    .usage('<file>')
-    .parse(process.argv);
-
 var renderer = new marked.Renderer();
 
 var ITALIC_COLOR = 'blue';
@@ -71,17 +65,22 @@ marked.setOptions({
   smartypants: false
 });
 
-function mainBox(cont) {
+function mainBox(cont, files) {
     // Create a screen object.
     var screen = blessed.screen({
         smartCSR: true
     });
 
-    screen.title = 'mdview';
+    screen.title = program._name + ' ' + files.pop();
 
     // Quit on Escape, q, or Control-C.
     screen.key(['escape', 'q', 'C-c'], function(ch, key) {
-        return process.exit(0);
+        if(files.length === 0) {
+            return process.exit(0);
+        } else {
+            loadFiles(files);
+            screen.destroy();
+        }
     });
 
     // Main box
@@ -104,21 +103,32 @@ function mainBox(cont) {
     screen.render();
 }
 
-// Convert the Markdown data to
+// Convert the Markdown data to text
 function convertMD(data) {
     var html = marked(data);
     var txt = htmlToText.fromString(html, {tables: true, wordwrap: false});
     return txt;
 }
 
-if(program.args.length != 1) {
+function loadFiles(files) {
+    var buf = fs.readFile(files[files.length - 1], {encoding: 'utf8'}, function(err, data) {
+        if(!err) {
+            mainBox(convertMD(data), files);
+        } else {
+            console.error(err);
+        }
+    });
+}
+
+program
+    .version(require('./package.json').version)
+    .description('An simple command line markdown viewer')
+    .usage('[FILE...]')
+    .parse(process.argv);
+
+if(program.args.length < 1) {
     program.help();
 }
 
-var buf = fs.readFile(program.args[0], {encoding: 'utf8'}, function(err, data) {
-    if(!err) {
-        mainBox(convertMD(data));
-    } else {
-        console.log(err);
-    }
-});
+program.args.reverse();
+loadFiles(program.args);
